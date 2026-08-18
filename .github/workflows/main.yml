@@ -50,21 +50,30 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y brave-browser
 
-      - name: Configurar Usuario RDP
+      - name: Configurar Usuario RDP y Arreglar Sesión
         run: |
           sudo useradd -m -s /bin/bash RDP
           echo "RDP:${{ github.event.inputs.rdp_password }}" | sudo chpasswd
           sudo usermod -aG sudo RDP
           
-          # Asignar entorno gráfico al usuario
-          sudo bash -c 'echo "xfce4-session" > /home/RDP/.xsession'
+          # 1. Configurar inicio de sesión con startxfce4 y darle permisos de ejecución
+          echo "startxfce4" | sudo tee /home/RDP/.xsession
+          sudo chmod +x /home/RDP/.xsession
           
-          # Crear carpetas CON SUDO
+          # 2. Forzar a xrdp a usar XFCE4 parcheando el script principal (startwm.sh)
+          sudo sed -i 's/^test -x \/etc\/X11\/Xsession/#test -x \/etc\/X11\/Xsession/g' /etc/xrdp/startwm.sh
+          sudo sed -i 's/^exec \/bin\/sh \/etc\/X11\/Xsession/#exec \/bin\/sh \/etc\/X11\/Xsession/g' /etc/xrdp/startwm.sh
+          echo "startxfce4" | sudo tee -a /etc/xrdp/startwm.sh
+          
+          # 3. Crear carpetas CON SUDO
           sudo mkdir -p /home/RDP/Downloads
           sudo mkdir -p /home/RDP/Desktop
           
-          # Hacer al usuario RDP dueño de su propio directorio
+          # 4. Hacer al usuario RDP dueño de su propio directorio
           sudo chown -R RDP:RDP /home/RDP
+          
+          # 5. Reiniciar xrdp para que aplique la nueva configuración de la sesión
+          sudo systemctl restart xrdp
 
       - name: Instalar Python y Descargar Scripts
         run: |
