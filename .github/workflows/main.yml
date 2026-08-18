@@ -10,7 +10,7 @@ on:
 
 jobs:
   rdp-ubuntu:
-    runs-on: ubuntu-22.04 # Usamos 22.04 por mayor compatibilidad de paquetes
+    runs-on: ubuntu-22.04
     timeout-minutes: 350
 
     steps:
@@ -56,27 +56,33 @@ jobs:
           echo "RDP:${{ github.event.inputs.rdp_password }}" | sudo chpasswd
           sudo usermod -aG sudo RDP
           
-          # Dar permisos al usuario RDP
+          # Asignar entorno gráfico al usuario
           sudo bash -c 'echo "xfce4-session" > /home/RDP/.xsession'
-          sudo chown RDP:RDP /home/RDP/.xsession
-          mkdir -p /home/RDP/Downloads
-          mkdir -p /home/RDP/Desktop
+          
+          # Crear carpetas CON SUDO
+          sudo mkdir -p /home/RDP/Downloads
+          sudo mkdir -p /home/RDP/Desktop
+          
+          # Hacer al usuario RDP dueño de su propio directorio
+          sudo chown -R RDP:RDP /home/RDP
 
       - name: Instalar Python y Descargar Scripts
         run: |
           sudo apt-get install -y python3-pip python3-venv
           
-          # Instalar dependencias de Python globalmente
+          # Instalar dependencias de Python
           sudo pip3 install transformers datasets huggingface_hub accelerate tokenizers diffusers requests PyGithub httpx aiohttp tqdm pillow numpy pandas --break-system-packages
 
-          # Descargar tus scripts directamente a la carpeta del usuario RDP
-          cd /home/RDP/Downloads
-          wget -q -O hls.py "https://huggingface.co/CineMax/plis2/resolve/main/hls.py?download=true"
-          wget -q -O hug.py "https://huggingface.co/CineMax/plis2/resolve/main/hug.py?download=true"
-          wget -q -O huf.py "https://huggingface.co/CineMax/plis2/resolve/main/huf.py?download=true"
-          wget -q -O hugv3.py "https://huggingface.co/CineMax/plis2/resolve/main/hugv3.py?download=true"
-          wget -q -O pages.bat "https://huggingface.co/CineMax/plis2/resolve/main/pages.bat?download=true"
-          wget -q -O render.py "https://huggingface.co/CineMax/plis2/resolve/main/render.py?download=true"
+          # Descargar los archivos usando sudo y guardarlos en /home/RDP/Downloads/
+          sudo wget -q -O /home/RDP/Downloads/hls.py "https://huggingface.co/CineMax/plis2/resolve/main/hls.py?download=true"
+          sudo wget -q -O /home/RDP/Downloads/hug.py "https://huggingface.co/CineMax/plis2/resolve/main/hug.py?download=true"
+          sudo wget -q -O /home/RDP/Downloads/huf.py "https://huggingface.co/CineMax/plis2/resolve/main/huf.py?download=true"
+          sudo wget -q -O /home/RDP/Downloads/hugv3.py "https://huggingface.co/CineMax/plis2/resolve/main/hugv3.py?download=true"
+          sudo wget -q -O /home/RDP/Downloads/pages.bat "https://huggingface.co/CineMax/plis2/resolve/main/pages.bat?download=true"
+          sudo wget -q -O /home/RDP/Downloads/render.py "https://huggingface.co/CineMax/plis2/resolve/main/render.py?download=true"
+          
+          # Devolverle la propiedad de los archivos descargados al usuario RDP
+          sudo chown -R RDP:RDP /home/RDP/Downloads
 
       - name: Instalar Wine (Para correr gMKVExtractGUI y HLS Studio .exe)
         run: |
@@ -84,14 +90,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y wine64 wine32
 
-          # Descargar los programas de Windows
-          cd /home/RDP/Downloads
-          wget -q -O gMKVExtractGUI.7z "https://huggingface.co/CineMax/plis2/resolve/main/gMKVExtractGUI.v2.13.0.7z?download=true"
-          7z x gMKVExtractGUI.7z -ogMKVExtractGUI -y
+          # Descargar y extraer los programas de Windows con sudo
+          sudo wget -q -O /home/RDP/Downloads/gMKVExtractGUI.7z "https://huggingface.co/CineMax/plis2/resolve/main/gMKVExtractGUI.v2.13.0.7z?download=true"
+          sudo 7z x /home/RDP/Downloads/gMKVExtractGUI.7z -o/home/RDP/Downloads/gMKVExtractGUI -y
           
-          wget -q -O hls-studio-setup.exe "https://huggingface.co/CineMax/plis2/resolve/main/hls-studio%20Setup%201.0.0%20(1).exe?download=true"
+          sudo wget -q -O /home/RDP/Downloads/hls-studio-setup.exe "https://huggingface.co/CineMax/plis2/resolve/main/hls-studio%20Setup%201.0.0%20(1).exe?download=true"
 
-          # Asegurar que el usuario RDP sea el dueño de todo lo descargado
+          # Asegurar de nuevo que el usuario RDP sea el dueño de todo lo extraído
           sudo chown -R RDP:RDP /home/RDP/Downloads
 
       - name: Instalar Sunshine (Moonlight Server)
@@ -124,7 +129,7 @@ jobs:
           echo " "
           echo " ⚠️ NOTAS SOBRE PROGRAMAS DE WINDOWS:"
           echo " Encontrarás tus scripts y archivos en la carpeta Downloads."
-          echo " Para abrir gMKVExtractGUI o HLS Studio (.exe), ábrelos usando Wine."
+          echo " Para abrir gMKVExtractGUI o HLS Studio (.exe), hazlo a través de Wine."
           echo "=========================================================================="
 
       - name: Keep Alive y Monitor
