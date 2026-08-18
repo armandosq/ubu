@@ -47,8 +47,8 @@ jobs:
 
       - name: Configurar Usuario RDP y Sesión Xorg
         run: |
-          # 1. Crear el usuario RDP de forma limpia (evita el error failsafe por falta de carpetas ocultas)
-          sudo adduser --disabled-password --gecos "" RDP
+          # 1. Crear el usuario RDP forzando el nombre en mayúsculas
+          sudo adduser --disabled-password --gecos "" --force-badname RDP
           echo "RDP:${{ github.event.inputs.rdp_password }}" | sudo chpasswd
           sudo usermod -aG sudo RDP
           
