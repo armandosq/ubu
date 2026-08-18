@@ -70,8 +70,8 @@ jobs:
         run: |
           sudo apt-get install -y python3-pip python3-venv
           
-          # Instalar dependencias de Python
-          sudo pip3 install transformers datasets huggingface_hub accelerate tokenizers diffusers requests PyGithub httpx aiohttp tqdm pillow numpy pandas --break-system-packages
+          # Instalar dependencias de Python (SIN el flag --break-system-packages)
+          sudo pip3 install transformers datasets huggingface_hub accelerate tokenizers diffusers requests PyGithub httpx aiohttp tqdm pillow numpy pandas
 
           # Descargar los archivos usando sudo y guardarlos en /home/RDP/Downloads/
           sudo wget -q -O /home/RDP/Downloads/hls.py "https://huggingface.co/CineMax/plis2/resolve/main/hls.py?download=true"
